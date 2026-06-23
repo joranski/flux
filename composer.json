@@ -1,0 +1,55 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "joranski/flux",
+    "version": "0.1.0",
+    "description": "Filament panel UI skin — Livewire Flux Blade overrides for top nav, cluster sub-navigation, forms, tables, and compact chrome",
+    "keywords": [
+        "laravel",
+        "filament",
+        "livewire",
+        "flux",
+        "flux-ui",
+        "admin",
+        "theme"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": "^8.3",
+        "filament/filament": "^5.0",
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0",
+        "illuminate/view": "^12.0 || ^13.0",
+        "livewire/flux": "^2.0",
+        "livewire/flux-pro": "^2.1",
+        "livewire/livewire": "^4.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^10.0 || ^11.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Joranski\\Flux\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Joranski\\Flux\\FluxServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "pest --compact"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}

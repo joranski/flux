@@ -1,0 +1,5 @@
+/auth.json
+/vendor
+.env
+.phpunit.result.cache
+.phpunit.cache
