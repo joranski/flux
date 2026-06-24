@@ -61,6 +61,13 @@
 
     $wireSubmitHandler = $attributes->get('wire:submit.prevent');
     $attributes = $attributes->except(['wire:submit.prevent']);
+
+    $headingString = is_string($heading)
+        ? $heading
+        : (is_object($heading) && method_exists($heading, 'toHtml')
+            ? $heading->toHtml()
+            : (is_object($heading) ? (string) $heading : ''));
+    $modalKeySuffix = md5($headingString . ($width instanceof Width ? $width->value : (string) $width) . ($slideOver ? 'slide' : 'dialog'));
 @endphp
 
 @if ($trigger)
@@ -164,7 +171,7 @@
                 wire:submit.prevent="{!! $wireSubmitHandler !!}"
             @endif
             @if (filled($id))
-                wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.window"
+                wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.window"
             @endif
             {{
                 ($extraModalWindowAttributeBag ?? new \Illuminate\View\ComponentAttributeBag)->class([
@@ -182,7 +189,7 @@
             @if ($heading || $header)
                 <div
                     @if (filled($id))
-                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.header"
+                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.header"
                     @endif
                     @class([
                         'fi-modal-header',
@@ -233,7 +240,7 @@
             @if ($hasContent)
                 <div
                     @if (filled($id))
-                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.content"
+                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.content"
                     @endif
                     class="fi-modal-content"
                 >
@@ -244,7 +251,7 @@
             @if ($hasFooter)
                 <div
                     @if (filled($id))
-                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.footer"
+                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.footer"
                     @endif
                     @class([
                         'fi-modal-footer',

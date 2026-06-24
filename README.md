@@ -259,6 +259,8 @@ Custom Flux-styled **Filament modals and dropdowns** (`fixed inset-0 flex …` m
 | `resources/views/filament-panels/components/layout/index.blade.php` | Header actions: `shrink-0 isolate overflow-visible`; database notifications eager-loaded |
 | `resources/views/filament-panels/components/topbar/database-notifications-trigger.blade.php` | Thin override delegating to badged native icon button |
 
-**Related app fixes (not in this package):** sanitize email `body_html` before preview (`joranski/filament-emails`); load `@fluxScripts` once; theme safeguards in `resources/css/filament/admin/theme.css`.
+**Related app fixes (not in this package):** sanitize email `body_html` before preview (`joranski/filament-emails`); load `@fluxScripts` once; Flux modal chrome + transition fixes in `resources/css/filament/admin/theme.css`.
+
+**v0.1.2:** Restored Flux zinc slide-out *appearance* via theme CSS while keeping stock Filament Alpine markup; removed `display:none !important` on closed modals (was killing slide-out animations); stable `wire:key` suffixes on modal sections.
 
 **Tests:** `tests/Feature/Filament/FluxOverridesTest.php`
