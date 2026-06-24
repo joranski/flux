@@ -152,6 +152,28 @@ Without `.fi-fo-checkbox-list-option`, searchable lists report zero visible opti
 
 ## Development Workflow
 
+### Package layout (this repo)
+
+This is a **standalone Composer package** ([joranski/flux on GitHub](https://github.com/joranski/flux)). Do **not** edit `vendor/joranski/flux` in the consuming app — changes belong here, then release via git tag.
+
+| What | Where |
+|------|--------|
+| Filament Blade overrides | `resources/views/{namespace}/…` (prepended by `FluxServiceProvider`) |
+| Provider / registration | `src/FluxServiceProvider.php` |
+| App-only layout hooks | Consuming app (`resources/views/filament/app/`, `theme.css`) |
+| Domain packages (emails, comments, …) | Their own repos / `packages/joranski/*` — **not** folded into flux unless adding a new prepended namespace |
+
+**Workflow:**
+
+1. Clone or work in this repo (e.g. `~/packages/flux`).
+2. Copy the **stock Filament** view from `vendor/filament/…` when overriding; preserve Alpine hook classes (`fi-modal-*`, `fi-fo-*`, `filamentModal`, `filamentDropdown`).
+3. Prefer Flux components for chrome that does not drive Filament Alpine (navbar, buttons, forms). Revert to stock Filament markup when Flux breaks Alpine (modals, teleported dropdowns) — see 2026-06-23 notes below.
+4. Bump `"version"` in `composer.json`, commit, tag (`v0.1.1`), push to GitHub.
+5. In the consuming app: `"joranski/flux": "^0.1.1"` + VCS repository (same pattern as `joranski/filament-media`).
+6. `composer update joranski/flux && php artisan view:clear`
+
+**Local path install (optional, like `filament-emails`):** only if you vendor the clone inside the app at `packages/joranski/flux` with a Composer `path` repository — avoid machine-specific absolute paths.
+
 ### After changing Blade overrides in this package
 
 ```bash
@@ -187,6 +209,7 @@ Symptom of wrong ownership: generic **500 Server Error**, log may show `tempnam(
 
 | Test file | What it covers |
 |-----------|----------------|
+| `tests/Feature/Filament/FluxOverridesTest.php` | Modal/dropdown/user-menu layout invariants (run from consuming app) |
 | `tests/Feature/Theme/FluxIconButtonBadgeTest.php` | Badged icon buttons use native Filament markup; non-badged use Flux |
 | `tests/Feature/Authorization/ShieldRoleFormCheckboxListTest.php` | Shield Pages/Widgets checkbox lists render `.fi-fo-checkbox-list-option` |
 
@@ -223,3 +246,19 @@ When overriding form components that Filament drives with Alpine (checkbox lists
 | `resources/views/filament-panels/components/page/sub-navigation/sidebar.blade.php` | Collapsed rail centering; `.fi-subnav-item-label` instead of hiding all spans |
 | `resources/views/filament-forms/components/checkbox-list.blade.php` | `.fi-fo-checkbox-list-option` wrapper for Shield searchable lists |
 | `resources/css/filament/admin/theme.css` | Subnav label truncation selector; removed experimental badged icon-button CSS |
+
+### Livewire / Filament modal stability (2026-06-23)
+
+Custom Flux-styled **Filament modals and dropdowns** (`fixed inset-0 flex …` markup) broke Alpine `x-show` / `filamentModal` initialization and blocked header clicks (notification bell, user menu). They are reverted to **stock Filament** structure for:
+
+| File | Change |
+|------|--------|
+| `resources/views/filament/components/modal/index.blade.php` | Stock `fi-modal-window-ctn` / `fi-modal-close-overlay` markup (Alpine-safe) |
+| `resources/views/filament/components/dropdown/index.blade.php` | Stock Filament dropdown; teleported panels use `x-float…shift.teleport.hide` |
+| `resources/views/filament-panels/components/user-menu.blade.php` | Topbar user menu uses `<flux:dropdown>` instead of teleported Filament dropdown |
+| `resources/views/filament-panels/components/layout/index.blade.php` | Header actions: `shrink-0 isolate overflow-visible`; database notifications eager-loaded |
+| `resources/views/filament-panels/components/topbar/database-notifications-trigger.blade.php` | Thin override delegating to badged native icon button |
+
+**Related app fixes (not in this package):** sanitize email `body_html` before preview (`joranski/filament-emails`); load `@fluxScripts` once; theme safeguards in `resources/css/filament/admin/theme.css`.
+
+**Tests:** `tests/Feature/Filament/FluxOverridesTest.php`

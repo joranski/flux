@@ -25,17 +25,23 @@
     if (is_string($width)) {
         $width = Width::tryFrom($width) ?? $width;
     }
+
+    // Teleported topbar menus sit on the viewport edge; shift + hide keep panels on-screen
+    // and prevent closed panels from intercepting clicks on neighboring header controls.
+    if ($teleport) {
+        $shift = true;
+    }
 @endphp
 
 <div
     x-data="filamentDropdown"
-    {{ $attributes->class(['fi-dropdown relative']) }}
+    {{ $attributes->class(['fi-dropdown']) }}
 >
     <div
         x-on:keyup.enter="toggle($event)"
         x-on:keyup.space="toggle($event)"
         x-on:mousedown="if ($event.button === 0) toggle($event)"
-        {{ $trigger->attributes->class(['fi-dropdown-trigger cursor-pointer']) }}
+        {{ $trigger->attributes->class(['fi-dropdown-trigger']) }}
     >
         {{ $trigger }}
     </div>
@@ -43,18 +49,18 @@
     @if (! \Filament\Support\is_slot_empty($slot))
         <div
             x-cloak
-            x-float{{ $placement ? ".placement.{$placement}" : '' }}{{ $size ? '.size' : '' }}{{ $flip ? '.flip' : '' }}{{ $shift ? '.shift' : '' }}{{ $teleport ? '.teleport' : '' }}{{ $offset ? '.offset' : '' }}="{ offset: {{ $offset }}, {{ $size ? ('size: ' . $sizeConfig) : '' }} }"
+            x-float{{ $placement ? ".placement.{$placement}" : '' }}{{ $size ? '.size' : '' }}{{ $flip ? '.flip' : '' }}{{ $shift ? '.shift' : '' }}{{ $teleport ? '.teleport.hide' : '' }}{{ $offset ? '.offset' : '' }}="{ offset: {{ $offset }}, {{ $size ? ('size: ' . $sizeConfig) : '' }} }"
             x-ref="panel"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:leave-end="opacity-0 scale-95"
+            x-transition:enter-start="fi-opacity-0"
+            x-transition:leave-end="fi-opacity-0"
             @if ($attributes->has('wire:key'))
                 wire:ignore.self
                 wire:key="{{ $attributes->get('wire:key') }}.panel"
             @endif
             @class([
-                'fi-dropdown-panel z-50 p-1.5 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-hidden transition-all duration-100 ease-out',
+                'fi-dropdown-panel',
                 ($width instanceof Width) ? "fi-width-{$width->value}" : (is_string($width) ? $width : ''),
-                'fi-scrollable overflow-y-auto' => $maxHeight || $size,
+                'fi-scrollable' => $maxHeight || $size,
             ])
             @style([
                 ('max-height: ' . e($maxHeight)) => $maxHeight,

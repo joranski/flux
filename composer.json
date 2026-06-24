@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "joranski/flux",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Filament panel UI skin — Livewire Flux Blade overrides for top nav, cluster sub-navigation, forms, tables, and compact chrome",
     "keywords": [
         "laravel",

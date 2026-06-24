@@ -106,10 +106,10 @@
         <flux:spacer />
 
         <!-- Database Notifications & User Profile Menu -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 shrink-0 isolate overflow-visible pe-2 lg:pe-3">
             @if (filament()->hasDatabaseNotifications())
                 @livewire(filament()->getDatabaseNotificationsLivewireComponent(), [
-                    'lazy' => filament()->hasLazyLoadedDatabaseNotifications(),
+                    'lazy' => false,
                 ])
             @endif
 

@@ -1,5 +1,13 @@
+@php
+    use Filament\Support\Enums\Alignment;
+    use Filament\Support\Enums\SlideOverPosition;
+    use Filament\Support\Enums\Width;
+    use Filament\Support\View\Components\ModalComponent\IconComponent;
+    use Illuminate\View\ComponentAttributeBag;
+@endphp
+
 @props([
-    'alignment' => \Filament\Support\Enums\Alignment::Start,
+    'alignment' => Alignment::Start,
     'ariaLabelledby' => null,
     'autofocus' => \Filament\Support\View\Components\ModalComponent::$isAutofocused,
     'closeButton' => \Filament\Support\View\Components\ModalComponent::$hasCloseButton,
@@ -12,7 +20,7 @@
     'extraModalOverlayAttributeBag' => null,
     'footer' => null,
     'footerActions' => [],
-    'footerActionsAlignment' => \Filament\Support\Enums\Alignment::Start,
+    'footerActionsAlignment' => Alignment::Start,
     'header' => null,
     'heading' => null,
     'icon' => null,
@@ -21,9 +29,9 @@
     'id' => null,
     'openEventName' => 'open-modal',
     'slideOver' => false,
-    'slideOverPosition' => \Filament\Support\Enums\SlideOverPosition::End,
-    'stickyFooter' => true,
-    'stickyHeader' => true,
+    'slideOverPosition' => SlideOverPosition::End,
+    'stickyFooter' => false,
+    'stickyHeader' => false,
     'teleport' => null,
     'trigger' => null,
     'visible' => true,
@@ -31,12 +39,6 @@
 ])
 
 @php
-    use Filament\Support\Enums\Alignment;
-    use Filament\Support\Enums\SlideOverPosition;
-    use Filament\Support\Enums\Width;
-    use Filament\Support\View\Components\ModalComponent\IconComponent;
-    use Illuminate\View\ComponentAttributeBag;
-
     $hasContent = ! \Filament\Support\is_slot_empty($slot);
     $hasDescription = filled($description);
     $hasFooter = (! \Filament\Support\is_slot_empty($footer)) || (is_array($footerActions) && count($footerActions)) || (! is_array($footerActions) && (! \Filament\Support\is_slot_empty($footerActions)));
@@ -59,12 +61,12 @@
 
     $wireSubmitHandler = $attributes->get('wire:submit.prevent');
     $attributes = $attributes->except(['wire:submit.prevent']);
-
-    $headingString = is_string($heading) ? $heading : (is_object($heading) && method_exists($heading, 'toHtml') ? $heading->toHtml() : (is_object($heading) ? (string) $heading : ''));
-    $modalKeySuffix = md5($headingString . ($width instanceof Width ? $width->value : $width) . ($slideOver ? 'true' : 'false'));
 @endphp
 
 @if ($trigger)
+    {!! '<div>' !!}
+    {{-- Avoid formatting issues with unclosed elements --}}
+
     <div
         @if (! $trigger->attributes->get('disabled'))
             @if ($id)
@@ -81,6 +83,7 @@
 
 @if (filled($teleport))
     {!! "<template x-teleport=\"{$teleport}\">" !!}
+    {{-- Avoid formatting issues with unclosed elements --}}
 @endif
 
 <div
@@ -113,104 +116,115 @@
     x-trap.noscroll{{ $autofocus ? '' : '.noautofocus' }}="isOpen"
     {{
         $attributes->class([
-            'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto',
+            'fi-modal',
+            'fi-absolute-positioning-context',
+            'fi-modal-slide-over' => $slideOver,
+            'fi-modal-slide-over-from-start' => $slideOver && $slideOverPosition === SlideOverPosition::Start,
+            'fi-modal-slide-over-from-end' => $slideOver && $slideOverPosition === SlideOverPosition::End,
+            'fi-modal-has-sticky-header' => $stickyHeader,
+            'fi-modal-has-sticky-footer' => $stickyFooter,
+            'fi-width-screen' => $width === Width::Screen,
         ])
     }}
 >
-    <!-- Overlay -->
     <div
         aria-hidden="true"
         x-show="isOpen"
         x-transition.duration.300ms.opacity
-        @if ($closeByClickingAway)
-            x-on:click="{{ $closeEventHandler }}"
-        @endif
-        {{ ($extraModalOverlayAttributeBag ?? new \Illuminate\View\ComponentAttributeBag)->class([
-            'fixed inset-0 bg-zinc-800/40 dark:bg-zinc-950/60 backdrop-blur-xs transition-opacity',
-        ]) }}
+        {{
+            ($extraModalOverlayAttributeBag ?? new \Illuminate\View\ComponentAttributeBag)->class([
+                'fi-modal-close-overlay',
+            ])
+        }}
     ></div>
 
-    <!-- Modal Window Container -->
     <div
-        class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none"
+        @if ($closeByClickingAway)
+            x-on:click.self="{{ $closeEventHandler }}"
+        @endif
+        @class([
+            'fi-modal-window-ctn',
+            'fi-clickable' => $closeByClickingAway,
+        ])
     >
         <{{ filled($wireSubmitHandler) ? 'form' : 'div' }}
             @if ($closeByEscaping)
                 x-on:keydown.window.escape="if (isTopmost()) {{ $closeEventHandler }}"
             @endif
             x-show="isWindowVisible"
-            x-transition:enter="ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-            x-transition:leave="ease-in duration-200"
-            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter="fi-transition-enter"
+            x-transition:leave="fi-transition-leave"
+            @if ($width !== Width::Screen)
+                x-transition:enter-start="fi-transition-enter-start"
+                x-transition:enter-end="fi-transition-enter-end"
+                x-transition:leave-start="fi-transition-leave-start"
+                x-transition:leave-end="fi-transition-leave-end"
+            @endif
             @if (filled($wireSubmitHandler))
                 wire:submit.prevent="{!! $wireSubmitHandler !!}"
             @endif
             @if (filled($id))
-                wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.window"
+                wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.window"
             @endif
-            {{ ($extraModalWindowAttributeBag ?? new \Illuminate\View\ComponentAttributeBag)->class([
-                'pointer-events-auto relative w-full bg-white dark:bg-zinc-800 border dark:border-zinc-700 shadow-xl rounded-xl transition-all flex flex-col',
-                'fixed inset-y-0 right-0 h-screen max-h-screen rounded-none border-l' => $slideOver,
-                'max-h-[calc(100vh-4rem)] rounded-xl' => ! $slideOver,
-                match ($width?->value ?? $width) {
-                    'xs' => 'max-w-xs',
-                    'sm' => 'max-w-sm',
-                    'md' => 'max-w-md',
-                    'lg' => 'max-w-lg',
-                    'xl' => 'max-w-xl',
-                    '2xl' => 'max-w-2xl',
-                    '3xl' => 'max-w-3xl',
-                    '4xl' => 'max-w-4xl',
-                    '5xl' => 'max-w-5xl',
-                    '6xl' => 'max-w-6xl',
-                    '7xl' => 'max-w-7xl',
-                    'screen' => 'max-w-screen-2xl',
-                    default => 'max-w-xl',
-                },
-            ]) }}
+            {{
+                ($extraModalWindowAttributeBag ?? new \Illuminate\View\ComponentAttributeBag)->class([
+                    'fi-modal-window',
+                    'fi-modal-window-has-close-btn' => $closeButton,
+                    'fi-modal-window-has-content' => $hasContent,
+                    'fi-modal-window-has-footer' => $hasFooter,
+                    'fi-modal-window-has-icon' => $hasIcon,
+                    'fi-hidden' => ! $visible,
+                    ($alignment instanceof Alignment) ? "fi-align-{$alignment->value}" : null,
+                    ($width instanceof Width) ? "fi-width-{$width->value}" : (is_string($width) ? $width : null),
+                ])
+            }}
         >
-            @if ($closeButton)
-                <div class="absolute top-4 right-4 z-20">
-                    <flux:button
-                        variant="ghost"
-                        icon="x-mark"
-                        size="sm"
-                        aria-label="Close"
-                        x-on:click="{{ $closeEventHandler }}"
-                        class="text-zinc-400 hover:text-zinc-800 dark:hover:text-white"
-                    />
-                </div>
-            @endif
-
             @if ($heading || $header)
                 <div
                     @if (filled($id))
-                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.header"
+                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.header"
                     @endif
-                    class="px-6 pt-6 pb-4 shrink-0 {{ $stickyHeader ? 'sticky top-0 bg-white dark:bg-zinc-800 z-10 border-b border-zinc-100 dark:border-zinc-700/50' : '' }}"
+                    @class([
+                        'fi-modal-header',
+                        'fi-vertical-align-center' => $hasIcon && $hasHeading && (! $hasDescription) && in_array($alignment, [Alignment::Start, Alignment::Left]),
+                    ])
                 >
+                    @if ($closeButton)
+                        <x-filament::icon-button
+                            color="gray"
+                            :icon="\Filament\Support\Icons\Heroicon::OutlinedXMark"
+                            :icon-alias="\Filament\Support\View\SupportIconAlias::MODAL_CLOSE_BUTTON"
+                            icon-size="lg"
+                            :label="__('filament::components/modal.actions.close.label')"
+                            tabindex="-1"
+                            :x-on:click="$closeEventHandler"
+                            class="fi-modal-close-btn"
+                        />
+                    @endif
+
                     @if ($header)
                         {{ $header }}
                     @else
-                        <div class="flex items-start gap-3">
-                            @if ($hasIcon)
-                                <div class="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 shrink-0">
-                                    {{ \Filament\Support\generate_icon_html($icon, size: \Filament\Support\Enums\IconSize::Large) }}
+                        @if ($hasIcon)
+                            <div class="fi-modal-icon-ctn">
+                                <div
+                                    {{ (new ComponentAttributeBag)->color(IconComponent::class, $iconColor)->class(['fi-modal-icon-bg']) }}
+                                >
+                                    {{ \Filament\Support\generate_icon_html($icon, $iconAlias, size: \Filament\Support\Enums\IconSize::Large) }}
                                 </div>
-                            @endif
-                            <div class="pr-6">
-                                <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ $heading }}
-                                </h3>
-                                @if ($hasDescription)
-                                    <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                                        {{ $description }}
-                                    </p>
-                                @endif
                             </div>
+                        @endif
+
+                        <div>
+                            <h2 class="fi-modal-heading">
+                                {{ $heading }}
+                            </h2>
+
+                            @if ($hasDescription)
+                                <p class="fi-modal-description">
+                                    {{ $description }}
+                                </p>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -219,9 +233,9 @@
             @if ($hasContent)
                 <div
                     @if (filled($id))
-                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.content"
+                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.content"
                     @endif
-                    class="text-zinc-600 dark:text-zinc-300 text-sm px-6 py-6 flex-1 overflow-y-auto min-h-0"
+                    class="fi-modal-content"
                 >
                     {{ $slot }}
                 </div>
@@ -230,20 +244,25 @@
             @if ($hasFooter)
                 <div
                     @if (filled($id))
-                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.{{ $modalKeySuffix }}.footer"
+                        wire:key="{{ isset($this) ? "{$this->getId()}." : '' }}modal.{{ $id }}.footer"
                     @endif
-                    class="px-6 py-4 shrink-0 {{ $stickyFooter ? 'sticky bottom-0 bg-white dark:bg-zinc-800 z-10 border-t border-zinc-100 dark:border-zinc-700/50' : 'border-t border-zinc-100 dark:border-zinc-700/50' }} flex items-center justify-end gap-3"
+                    @class([
+                        'fi-modal-footer',
+                        ($footerActionsAlignment instanceof Alignment) ? "fi-align-{$footerActionsAlignment->value}" : null,
+                    ])
                 >
                     @if (! \Filament\Support\is_slot_empty($footer))
                         {{ $footer }}
                     @else
-                        @if (is_array($footerActions))
-                            @foreach ($footerActions as $action)
-                                {{ $action }}
-                            @endforeach
-                        @else
-                            {{ $footerActions }}
-                        @endif
+                        <div class="fi-modal-footer-actions">
+                            @if (is_array($footerActions))
+                                @foreach ($footerActions as $action)
+                                    {{ $action }}
+                                @endforeach
+                            @else
+                                {{ $footerActions }}
+                            @endif
+                        </div>
                     @endif
                 </div>
             @endif
@@ -253,4 +272,10 @@
 
 @if (filled($teleport))
     {!! '</template>' !!}
+    {{-- Avoid formatting issues with unclosed elements --}}
+@endif
+
+@if ($trigger)
+    {!! '</div>' !!}
+    {{-- Avoid formatting issues with unclosed elements --}}
 @endif
