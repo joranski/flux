@@ -6,5 +6,4 @@
     icon-size="lg"
     :label="__('filament-panels::layout.actions.open_database_notifications.label')"
     class="fi-topbar-database-notifications-btn"
-    wire:loading.attr=""
 />
