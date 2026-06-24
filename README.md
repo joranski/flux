@@ -261,6 +261,8 @@ Custom Flux-styled **Filament modals and dropdowns** (`fixed inset-0 flex …` m
 
 **Related app fixes (not in this package):** sanitize email `body_html` before preview (`joranski/filament-emails`); load `@fluxScripts` once; Flux modal chrome + transition fixes in `resources/css/filament/admin/theme.css`.
 
+**v0.1.3:** Restored Filament's lazy-loaded database notifications in the panel layout (`lazy => false` was forcing immediate mount + extra Livewire round-trips on every page, contributing to error toasts).
+
 **v0.1.2:** Restored Flux zinc slide-out *appearance* via theme CSS while keeping stock Filament Alpine markup; removed `display:none !important` on closed modals (was killing slide-out animations); stable `wire:key` suffixes on modal sections.
 
 **Tests:** `tests/Feature/Filament/FluxOverridesTest.php`

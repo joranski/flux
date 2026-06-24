@@ -109,7 +109,7 @@
         <div class="flex items-center gap-2 shrink-0 isolate overflow-visible pe-2 lg:pe-3">
             @if (filament()->hasDatabaseNotifications())
                 @livewire(filament()->getDatabaseNotificationsLivewireComponent(), [
-                    'lazy' => false,
+                    'lazy' => filament()->hasLazyLoadedDatabaseNotifications(),
                 ])
             @endif
 
