@@ -261,6 +261,43 @@ Custom Flux-styled **Filament modals and dropdowns** (`fixed inset-0 flex …` m
 
 **Related app fixes (not in this package):** sanitize email `body_html` before preview (`joranski/filament-emails`); load `@fluxScripts` once; Flux modal chrome + transition fixes in `resources/css/filament/admin/theme.css`.
 
+### Filament select multi-select dropdowns (2026-07-10)
+
+**Not a package Blade bug.** Searchable / multi `Select` fields still use Filament's Alpine `selectFormComponent`; the Flux override only wraps native single selects in `<flux:select>`.
+
+Filament renders select option panels as `.fi-dropdown-panel.fi-scrollable` and toggles them with **`display` + `opacity`**, not inline `visibility: visible`.
+
+If the consuming app's `theme.css` hides closed header/action dropdowns with:
+
+```css
+/* WRONG — also hides every form select dropdown */
+.fi-dropdown-panel:not([style*="visibility: visible"]) {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+```
+
+…multi-selects appear broken (button shows selected labels but the list never opens).
+
+**Correct pattern (host app `theme.css`):**
+
+```css
+.fi-dropdown-panel:not(.fi-scrollable):not([style*="visibility: visible"]) {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+```
+
+**Test (swm-filament):** `tests/Feature/Theme/AdminThemePersistenceTest.php` — `admin theme css does not hide filament select dropdown panels`.
+
+### Field hints below labels (2026-07-10)
+
+Filament `->hint()` content is injected via `$afterLabelSchema`. The Flux `field-wrapper` override must **not** render that schema inside `<flux:label>` — otherwise hint text sits on the same line as the label (`PasswordMin 8 chars…`).
+
+**Fix:** keep `$afterLabelSchema` outside `<flux:label>`, but on the **same row** in `.fi-fo-field-label-row` with `gap-x-2` between label and hint (not stacked on a new line).
+
+**Test:** `tests/Feature/Filament/FluxOverridesTest.php` — `flux field wrapper renders hints below the label not inside flux:label`.
+
 **v0.1.4:** Removed stray `wire:loading.attr=""` from database notifications trigger override.
 
 **v0.1.3:** Restored Filament's lazy-loaded database notifications in the panel layout (`lazy => false` was forcing immediate mount + extra Livewire round-trips on every page, contributing to error toasts).

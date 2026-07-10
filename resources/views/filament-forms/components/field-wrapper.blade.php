@@ -77,29 +77,45 @@
     {{ $aboveLabelSchema }}
 
     @if ($labelPrefix || $labelSuffix)
-        <div class="flex items-center gap-3">
+        <div class="fi-fo-field-label-row mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
             @if ($labelPrefix)
                 {{ $labelPrefix }}
             @endif
 
             @if (filled($label) && (! $labelSrOnly))
-                <flux:label :for="$id" class="cursor-pointer">
+                <flux:label :for="$id" class="cursor-pointer shrink-0">
                     {{ $beforeLabelSchema }}
                     {{ $label }}@if ($required && (! $isDisabled))<span class="text-red-500 ml-0.5">*</span>@endif
-                    {{ $afterLabelSchema }}
                 </flux:label>
             @endif
 
             @if ($labelSuffix)
                 {{ $labelSuffix }}
             @endif
+
+            @if (filled($afterLabelSchema))
+                <div class="fi-fo-field-label-hint min-w-0">
+                    {{ $afterLabelSchema }}
+                </div>
+            @endif
         </div>
     @elseif (filled($label) && (! $labelSrOnly))
-        <flux:label :for="$id" class="mb-1.5">
-            {{ $beforeLabelSchema }}
-            {{ $label }}@if ($required && (! $isDisabled))<span class="text-red-500 ml-0.5">*</span>@endif
+        <div class="fi-fo-field-label-row mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <flux:label :for="$id" class="shrink-0">
+                {{ $beforeLabelSchema }}
+                {{ $label }}@if ($required && (! $isDisabled))<span class="text-red-500 ml-0.5">*</span>@endif
+            </flux:label>
+
+            @if (filled($afterLabelSchema))
+                <div class="fi-fo-field-label-hint min-w-0">
+                    {{ $afterLabelSchema }}
+                </div>
+            @endif
+        </div>
+    @elseif (filled($afterLabelSchema))
+        <div class="fi-fo-field-label-hint mb-1.5">
             {{ $afterLabelSchema }}
-        </flux:label>
+        </div>
     @endif
 
     {{ $belowLabelSchema }}
