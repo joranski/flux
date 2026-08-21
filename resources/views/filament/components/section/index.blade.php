@@ -1,3 +1,8 @@
+{{--
+    Filament v5 schema Section (resource/action forms) is compiled in PHP and
+    does not use this Blade view. Zinc card surfaces live in
+    resources/css/filament-sections.css — import that from the host theme.
+--}}
 @php
     use Filament\Support\Enums\Alignment;
     use Filament\Support\Enums\IconSize;

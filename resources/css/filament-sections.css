@@ -1,0 +1,25 @@
+/*
+ * Filament v5 schema Section is compiled in PHP (not filament::components.section).
+ * Stock dark:bg-gray-900 reads navy on Flux zinc-900 chrome. Use Flux card tokens.
+ *
+ * Import from the consuming app theme:
+ *   @import '../../../../vendor/joranski/flux/resources/css/filament-sections.css';
+ */
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside) {
+    @apply bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-800 dark:ring-white/10;
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside).fi-secondary {
+    @apply bg-zinc-50 dark:bg-white/5;
+}
+
+.fi-section.fi-aside:not(.fi-section-not-contained) > .fi-section-content-ctn {
+    @apply bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-800 dark:ring-white/10;
+}
+
+.fi-section:not(.fi-aside) > .fi-section-header,
+.fi-section:not(.fi-aside).fi-section-has-header:not(.fi-collapsed) > .fi-section-content-ctn,
+.fi-section:not(.fi-section-not-contained) > .fi-section-content-ctn > .fi-section-footer {
+    @apply border-zinc-200 dark:border-zinc-700;
+}

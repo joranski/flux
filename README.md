@@ -27,6 +27,12 @@ The package integrates with Laravel and Filament by prepending view namespaces:
 
 Application-level styling that complements these overrides lives in `resources/css/filament/admin/theme.css` (built via Vite into the admin panel theme).
 
+**Filament v5 schema `Section` is not Blade-overridable.** Resource and action forms compile `Filament\Schemas\Components\Section` in PHP (`schemas/src/Components/Section.php`). The view at `resources/views/filament/components/section/index.blade.php` only covers the legacy support component. Import the package CSS so stock `dark:bg-gray-900` cards do not read navy on Flux zinc chrome:
+
+```css
+@import '../../../../vendor/joranski/flux/resources/css/filament-sections.css';
+```
+
 ---
 
 ## How to Switch Between Layouts
@@ -297,6 +303,8 @@ Filament `->hint()` content is injected via `$afterLabelSchema`. The Flux `field
 **Fix:** keep `$afterLabelSchema` outside `<flux:label>`, but on the **same row** in `.fi-fo-field-label-row` with `gap-x-2` between label and hint (not stacked on a new line).
 
 **Test:** `tests/Feature/Filament/FluxOverridesTest.php` — `flux field wrapper renders hints below the label not inside flux:label`.
+
+**v0.1.6:** Schema `Section` zinc surfaces (`resources/css/filament-sections.css`). Filament v5 compiles form sections in PHP, so the Blade section override never runs on Add Child / Edit Details — import the CSS from the host theme.
 
 **v0.1.4:** Removed stray `wire:loading.attr=""` from database notifications trigger override.
 
