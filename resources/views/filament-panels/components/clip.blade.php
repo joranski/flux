@@ -31,6 +31,9 @@
     $href = $href ?? (isset($mappings[$class]) ? $mappings[$class] . $record->id : null);
     $title = $title ?? ($record->name ?? $record->code ?? $record->number ?? $record->domain ?? 'Record #' . $record->id);
     $isActive = $record->active ?? $record->is_active ?? true;
+    // Inside an explorer list the row itself is wire:click-able; a left click on the title
+    // must not trigger a full page load on top of that. The href stays for middle-click / new tab.
+    $preventTitleNavigation = $attributes->has('wire:click');
 @endphp
 <x-clip.wrapper :type="$type" :isSelected="$isSelected" {{ $attributes }}>
     @if($type === 'card')
@@ -43,7 +46,7 @@
                     <div class="min-w-0 flex-1">
                         <h4 class="text-sm font-bold text-zinc-800 dark:text-zinc-200 truncate">
                             @if($href)
-                                <a href="{{ $href }}" class="hover:underline text-amber-600 dark:text-amber-400">
+                                <a href="{{ $href }}" @if($preventTitleNavigation) x-on:click.prevent="" @endif class="hover:underline text-amber-600 dark:text-amber-400">
                                     {{ $title }}
                                 </a>
                             @else
@@ -82,7 +85,7 @@
                 <div class="min-w-0 flex-1">
                     <div class="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
                         @if($href)
-                            <a href="{{ $href }}" class="hover:underline text-amber-600 dark:text-amber-400 font-bold">
+                            <a href="{{ $href }}" @if($preventTitleNavigation) x-on:click.prevent="" @endif class="hover:underline text-amber-600 dark:text-amber-400 font-bold">
                                 {{ $title }}
                             </a>
                         @else

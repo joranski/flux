@@ -19,6 +19,12 @@
     'emptyState' => null,
     'modals' => null,
     'scrollableDetail' => false,
+
+    // Name of the Livewire property holding the selected record id
+    // (e.g. `selectedProductId`). When set, the list highlight follows that
+    // property client-side so selecting a row does not re-render the list.
+    // Rows opt in with a `data-record-id` attribute holding their id.
+    'selectionProperty' => null,
 ])
 <x-filament-panels::page class="fi-explorer-workspace {{ $denseExplorer ? 'fi-dense-explorer' : '' }}{{ $scrollableDetail ? ' fi-explorer-workspace--scrollable-detail' : '' }}">
     <div class="fi-explorer-grid grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-14rem+200px)] min-h-[800px]">
@@ -38,8 +44,14 @@
                     </div>
                 </div>
                 <div class="w-full">
+                    {{--
+                        `wire:island="explorer-list"` scopes the search round-trip to the
+                        list island on pages that render one; pages without islands fall
+                        back to a normal full render.
+                    --}}
                     <flux:input 
                         wire:model.live.debounce.250ms="searchQuery" 
+                        wire:island="explorer-list"
                         placeholder="Search..." 
                         size="sm" 
                         icon="magnifying-glass"
@@ -50,7 +62,18 @@
                 @if($filterTags) {{ $filterTags }} @endif
             </div>
             
-            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <div
+                class="fi-explorer-list flex-1 overflow-y-auto p-4 space-y-3"
+                @if($selectionProperty)
+                    x-data
+                    {{-- $nextTick: registering $wire.$watch synchronously inside Alpine's evaluator swallows the effect. --}}
+                    x-init="$nextTick(() => $wire.$watch(@js($selectionProperty), (value) => {
+                        $el.querySelectorAll('[data-explorer-row][data-record-id]').forEach((row) => {
+                            row.toggleAttribute('data-selected', String(row.dataset.recordId) === String(value))
+                        })
+                    }))"
+                @endif
+            >
                 {{ $list }}
             </div>
 
