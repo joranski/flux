@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "joranski/flux",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Filament-free Flux UI Blade building blocks (list clip cards/rows) for Livewire apps",
     "keywords": [
         "laravel",
@@ -37,6 +37,11 @@
     "autoload": {
         "psr-4": {
             "Joranski\\Flux\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Joranski\\Flux\\Tests\\": "tests/"
         }
     },
     "extra": {

@@ -111,6 +111,43 @@ $wire.$watch('selectedSkuId', (id) => {
 The bare card/row shell used by `clip`, for building custom list items with the same chrome.
 Props: `type` (`'row'` default, or `'card'`) and `isSelected`.
 
+### `<livewire:joranski-flux.tags-input>`
+
+A Flux Pro pillbox for free-form tags: pick existing values or create new ones as you type. Model it as a
+plain `array` of strings. Duplicates are ignored case-insensitively.
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `wire:model` | `array<string>` | required | Selected tag names (modelable). |
+| `suggestions` | `array<string>` | `[]` | Extra options shown alongside the selected tags. |
+| `label` | `?string` | `null` | Field label. |
+| `placeholder` | `?string` | `null` | Search input placeholder. |
+| `maxLength` | `int` | `255` | Longest tag accepted. |
+
+```blade
+<livewire:joranski-flux.tags-input wire:model="form.tags" :suggestions="$existingTags" label="Tags" />
+```
+
+It is a Livewire component (not a Blade component) because creating a tag needs server state. The package
+does not know about `spatie/laravel-tags`; sync the resulting array in your own form object.
+
+### `<x-joranski-flux::barcode-input>`
+
+A `flux:input` with a trailing scan button. The button opens a Flux modal that uses the device camera
+([html5-qrcode](https://github.com/mebjas/html5-qrcode), loaded on first use) and writes the decoded
+value back into the input, firing `input`/`change` so `wire:model` picks it up. Typing still works.
+
+```blade
+<x-joranski-flux::barcode-input wire:model="form.barcode" label="Barcode" maxlength="50" />
+```
+
+Props: `label`, `scanLabel`. Other attributes pass through to `flux:input`. Override the scanner script
+URL (e.g. to self-host it) with `JORANSKI_FLUX_BARCODE_SCANNER_SCRIPT`, or publish the config:
+
+```bash
+php artisan vendor:publish --tag=joranski-flux-config
+```
+
 ## Testing
 
 ```bash
