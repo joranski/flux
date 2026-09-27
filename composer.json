@@ -1,22 +1,27 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "joranski/flux",
-    "version": "0.1.7",
-    "description": "Filament panel UI skin — Livewire Flux Blade overrides for top nav, cluster sub-navigation, forms, tables, and compact chrome",
+    "version": "0.2.0",
+    "description": "Filament-free Flux UI Blade building blocks (list clip cards/rows) for Livewire apps",
     "keywords": [
         "laravel",
-        "filament",
         "livewire",
         "flux",
         "flux-ui",
-        "admin",
-        "theme"
+        "blade",
+        "components"
     ],
     "license": "MIT",
     "type": "library",
+    "repositories": [
+        {
+            "name": "flux-pro",
+            "type": "composer",
+            "url": "https://composer.fluxui.dev"
+        }
+    ],
     "require": {
         "php": "^8.3",
-        "filament/filament": "^5.0",
         "illuminate/contracts": "^12.0 || ^13.0",
         "illuminate/support": "^12.0 || ^13.0",
         "illuminate/view": "^12.0 || ^13.0",

@@ -10,32 +10,14 @@
     'isSelected' => false,
 ])
 @php
-    $class = get_class($record);
-    $mappings = [
-        \App\Models\Domain::class => '/shop/domains?selectedDomainId=',
-        \App\Models\Company::class => '/shop/companies?selectedCompanyId=',
-        \App\Models\Campaign::class => '/shop/campaigns?selectedCampaignId=',
-        \App\Models\Promo::class => '/shop/promos?selectedPromoId=',
-        \App\Models\Vehicle::class => '/shop/vehicles?selectedVehicleId=',
-        \App\Models\Facade::class => '/shop/facades?selectedFacadeId=',
-        \App\Models\Shop\Customer::class => '/shop/customers?selectedCustomerId=',
-        \App\Models\Shop\Product::class => '/shop/products?selectedProductId=',
-        \App\Models\Shop\Distributor::class => '/shop/distributors?selectedDistributorId=',
-        \App\Models\Shop\Sku::class => '/shop/skus?selectedSkuId=',
-        \App\Models\Shop\Brand::class => '/shop/brands?selectedBrandId=',
-        \App\Models\Shop\Bundle::class => '/shop/bundles?selectedBundleId=',
-        \App\Models\Shop\Category::class => '/shop/categories?selectedCategoryId=',
-        \App\Models\Shop\Order::class => '/shop/orders?activeOrderId=',
-    ];
-    
-    $href = $href ?? (isset($mappings[$class]) ? $mappings[$class] . $record->id : null);
+    $href = $href ?? \Joranski\Flux\Clip::defaultHref($record);
     $title = $title ?? ($record->name ?? $record->code ?? $record->number ?? $record->domain ?? 'Record #' . $record->id);
     $isActive = $record->active ?? $record->is_active ?? true;
     // Inside an explorer list the row itself is wire:click-able; a left click on the title
     // must not trigger a full page load on top of that. The href stays for middle-click / new tab.
     $preventTitleNavigation = $attributes->has('wire:click');
 @endphp
-<x-clip.wrapper :type="$type" :isSelected="$isSelected" {{ $attributes }}>
+<x-joranski-flux::clip.wrapper :type="$type" :isSelected="$isSelected" {{ $attributes }}>
     @if($type === 'card')
         <div class="space-y-3 w-full">
             <div class="flex items-start justify-between gap-4">
@@ -110,4 +92,4 @@
             </div>
         </div>
     @endif
-</x-clip.wrapper>
+</x-joranski-flux::clip.wrapper>

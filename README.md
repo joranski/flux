@@ -1,315 +1,128 @@
-# Joranski Flux Theme & Layout Overrides
+# joranski/flux
 
-This package provides visual customizations and layout overrides for Filament Panels in the application using **Livewire Flux**. It enables a clean, modern, and compact top-navigation structure on desktop, a thin collapsible sidebar for clusters, optimized whitespace heights, and custom unified button layouts.
+Filament-free [Flux UI](https://fluxui.dev) Blade building blocks for Livewire apps.
 
-Most Filament Blade components resolve through this package first; where Flux cannot safely replace Filament markup (notably **badged icon buttons**), the override **delegates back to stock Filament** so behavior and positioning stay correct.
+The package ships anonymous Blade components under the `joranski-flux` namespace. It depends only on
+Laravel, Livewire and Flux — no Filament classes, Blade components, view namespaces or Composer
+requirements (enforced by `tests/ArchitectureTest.php`).
 
----
+> **Upgrading from ≤ 0.1.x:** earlier releases were a Filament panel theme that prepended Flux view
+> overrides onto `filament`, `filament-panels`, `filament-forms` and plugin namespaces. That theme is no
+> longer part of this package; host apps that still run a Filament panel keep those overrides in their own
+> codebase and register them from an app service provider.
 
-## How It Works
+## Requirements
 
-The package integrates with Laravel and Filament by prepending view namespaces:
+- PHP 8.3+
+- Laravel 12 or 13
+- Livewire 4
+- Flux 2 (free + Pro)
 
-- The [`FluxServiceProvider`](src/FluxServiceProvider.php) hooks into the view factory's resolver.
-- It prepends namespaces for Filament panels, forms, tables, widgets, and third-party plugins so templates under `resources/views/` win over vendor defaults.
-- If a custom template exists, Laravel loads it; otherwise, it falls back to default Filament templates.
+## Installation
 
-### Prepended namespaces
+```bash
+composer require joranski/flux
+```
 
-| Namespace | Override directory |
-|-----------|-------------------|
-| `filament` | `resources/views/filament/` |
-| `filament-panels` | `resources/views/filament-panels/` |
-| `filament-forms` | `resources/views/filament-forms/` |
-| `filament-tables` | `resources/views/filament-tables/` |
-| `filament-widgets` | `resources/views/filament-widgets/` |
-| Plus plugin namespaces | `filament-activity-log`, `filament-impersonate`, `guava-calendar`, etc. |
+`Joranski\Flux\FluxServiceProvider` is auto-discovered. It registers:
 
-Application-level styling that complements these overrides lives in `resources/css/filament/admin/theme.css` (built via Vite into the admin panel theme).
+- the view namespace `joranski-flux::` → `resources/views`
+- the anonymous component namespace `<x-joranski-flux::…>` → `resources/views/components`
 
-**Filament v5 schema `Section` is not Blade-overridable.** Resource and action forms compile `Filament\Schemas\Components\Section` in PHP (`schemas/src/Components/Section.php`). The view at `resources/views/filament/components/section/index.blade.php` only covers the legacy support component. Import the package CSS so stock `dark:bg-gray-900` cards do not read navy on Flux zinc chrome:
+Include the package views in your Tailwind sources so the component classes are compiled:
 
 ```css
-@import '../../../../vendor/joranski/flux/resources/css/filament-sections.css';
+@source '../../vendor/joranski/flux/resources/views/**/*';
 ```
 
----
+## Components
 
-## How to Switch Between Layouts
+### `<x-joranski-flux::clip>`
 
-### Enable Flux UI layout (default)
+A compact list item for master/detail explorer lists, rendered as a **card** or a dense **row**.
 
-Ensure `Joranski\Flux\FluxServiceProvider::class` is registered in `bootstrap/providers.php`:
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `record` | `object` | required | Any object/model. Used for the title fallback, the active dot, and the default link. |
+| `type` | `'card'\|'row'` | `'card'` | Card shows a status footer; row shows a status dot. |
+| `title` | `?string` | `null` | Falls back to `name`, `code`, `number`, `domain`, then `Record #{id}`. |
+| `subtitle` | `?string` | `null` | Small muted line under the title. |
+| `href` | `?string` | `null` | Title link. When `null`, the host's resolver is asked (see below). |
+| `image` | `?string` | `null` | Thumbnail URL. |
+| `isSelected` | `bool` | `false` | Stamps `data-selected` for the amber highlight. |
+| `pivot` | slot | `null` | Extra content (price, badges) — below the title on cards, right-aligned on rows. |
+| `actions` | slot | `null` | Trailing actions. |
 
-```php
-return [
-    AppServiceProvider::class,
-    FilamentServiceProvider::class,
-    AdminPanelProvider::class,
-    VoltServiceProvider::class,
-    Joranski\Flux\FluxServiceProvider::class, // <-- Active
-];
-```
+All other attributes (`wire:click`, `wire:key`, `data-*`, `class`, …) pass through to the root element.
+When the clip has a `wire:click`, a left click on the title link is prevented so selecting the row does
+not also navigate; middle-click / open-in-new-tab still use the `href`.
 
-### Revert to default Filament UI
-
-1. Comment out the provider in `bootstrap/providers.php`.
-2. Clear compiled views: `php artisan view:clear`
-3. Hard-refresh the browser.
-
----
-
-## Implemented Design Overrides
-
-### 1. Top navigation hierarchy
-
-- Root clusters and pages (Dashboard, Shop, Settings) render in the top navbar.
-- Child pages and resources render in the cluster **sub-navigation sidebar**.
-
-### 2. Collapsible cluster sub-navigation sidebar
-
-**File:** `resources/views/filament-panels/components/page/sub-navigation/sidebar.blade.php`
-
-Behavior:
-
-- **Expanded:** `15rem` (`w-60`) width with labels, group headings, and Flux `navlist` groups.
-- **Collapsed:** `25px` icon rail — icons only, no extra horizontal padding.
-- Collapse state persists via `localStorage` and a `subnav_collapsed` cookie (read on first paint to avoid flash).
-- Group separators (`.fi-subnav-group-separator`) show when collapsed to distinguish nav groups.
-- Font Awesome and legacy Heroicon names are mapped to Flux icon names (e.g. `fas-boxes-stacked` → `cube`).
-
-**Collapsed-mode CSS (important details):**
-
-| Rule | Purpose |
-|------|---------|
-| `.fi-subnav-item-label { display: none }` | Hides item text labels only — **not** all `<span>` elements |
-| `[data-content] { display: none }` | Hides Flux navlist label slot when collapsed |
-| `[data-flux-navlist-item] { justify-content: center; padding-inline: 0 }` | Centers icons in the active highlight |
-| `[data-flux-navlist-item] svg { margin-inline: auto }` | Keeps SVG icons visually centered in the narrow rail |
-
-**Do not** restore a blanket rule like `[data-collapsed="true"] span { display: none }`. That breaks Flux navlist layout and causes icons to sit off-center inside the active-state background.
-
-Labels use class `fi-subnav-item-label` plus Alpine `x-show="!collapsed"` for instant hide on toggle.
-
-### 3. Icon buttons (`<x-filament::icon-button>`)
-
-**File:** `resources/views/filament/components/icon-button.blade.php`
-
-This override uses a **dual rendering strategy**:
-
-| Condition | Renderer | Why |
-|-----------|----------|-----|
-| **`badge` prop is set** (e.g. database notification bell + unread count) | **Native Filament** vendor view via `view()->file(...)` | Filament positions the count in `.fi-icon-btn-badge-ctn` as a superscript at the top-right of the icon. Wrapping `flux:button` breaks that layout (flex row, wrong containing block, or uncompiled nested Flux tags → HTTP 500). |
-| **No badge** | **Flux** `<flux:button square …>` | Keeps Flux styling for toolbar/modal icon actions. |
-
-**Native path (badged):**
+The active state reads `$record->active ?? $record->is_active ?? true`.
 
 ```blade
-@if (filled($badge))
-    {!! view()->file(
-        base_path('vendor/filament/support/resources/views/components/icon-button.blade.php'),
-        get_defined_vars(),
-    )->render() !!}
-@else
-    {{-- flux:button path --}}
-@endif
+<x-joranski-flux::clip
+    :record="$sku"
+    :type="$dense ? 'row' : 'card'"
+    :isSelected="$selectedSkuId === $sku->id"
+    :subtitle="$sku->partnum"
+    :href="route('manage.skus', ['selectedSkuId' => $sku->id])"
+    wire:key="sku-{{ $sku->id }}"
+    wire:click="selectSku({{ $sku->id }})"
+    data-record-id="{{ $sku->id }}"
+    class="cursor-pointer"
+>
+    <x-slot name="pivot">
+        <span class="font-mono">{{ $sku->price }}</span>
+    </x-slot>
+</x-joranski-flux::clip>
 ```
 
-**Production caller:** Filament database notifications trigger (`vendor/filament/filament/resources/views/components/topbar/database-notifications-trigger.blade.php`) passes `:badge="$unreadNotificationsCount ?: null"` — always uses the native path when unread count &gt; 0.
+#### Default links
 
-**Lessons learned (2026-06-22):**
+The package knows nothing about your models or routes. Register a resolver in a service provider to supply
+a link when `href` is omitted:
 
-- Do **not** put `flux:badge` inside `flux:button` for notification counts.
-- Do **not** wrap `flux:button` in an outer `<span>` for badge overlay — Blade may fail to compile nested self-closing Flux tags, causing **500 errors** after view recompilation.
-- Do **not** add custom `.fi-icon-btn--flux` badge CSS in `theme.css`; Filament's built-in `.fi-icon-btn > .fi-icon-btn-badge-ctn` rules are correct when native markup is used.
+```php
+use Joranski\Flux\Clip;
 
-### 4. Shield role form checkbox lists (Pages / Widgets tabs)
-
-**File:** `resources/views/filament-forms/components/checkbox-list.blade.php`
-
-Filament Shield's Pages and Widgets permission tabs use **searchable** checkbox lists. Filament's Alpine helper (`checkboxListFormComponent`) toggles visibility on elements with class **`.fi-fo-checkbox-list-option`**.
-
-The Flux override wraps each option in:
-
-```html
-<div class="fi-fo-checkbox-list-option">
-    <flux:checkbox … />
-    <span class="hidden fi-fo-checkbox-list-option-label">…</span>
-</div>
+Clip::resolveHrefUsing(fn (object $record): ?string => match ($record::class) {
+    \App\Models\Product::class => route('products.show', $record),
+    default => null,
+});
 ```
 
-Without `.fi-fo-checkbox-list-option`, searchable lists report zero visible options and **all checkboxes disappear** (Resources tab often still worked because Shield sets `searchable: false` there).
+Without a resolver, clips without an `href` render an unlinked title.
 
-**Test:** `tests/Feature/Authorization/ShieldRoleFormCheckboxListTest.php`
+#### Client-side selection
 
-### 5. Optimized vertical whitespace
+The root element carries `data-explorer-row` and, when selected, `data-selected`. Styling uses Tailwind's
+`data-selected:` variant, so an explorer can move the highlight without re-rendering the list:
 
-- Reduced top layout padding (see `theme.css`) so content sits closer to the top navbar.
-- Compact breadcrumbs (`text-xs`) and page headers (`text-xl`).
+```js
+$wire.$watch('selectedSkuId', (id) => {
+    $el.querySelectorAll('[data-explorer-row][data-record-id]').forEach((row) => {
+        row.toggleAttribute('data-selected', String(row.dataset.recordId) === String(id))
+    })
+})
+```
 
-### 6. Unified compact buttons
+### `<x-joranski-flux::clip.wrapper>`
 
-**File:** `resources/views/filament/components/button/index.blade.php`
+The bare card/row shell used by `clip`, for building custom list items with the same chrome.
+Props: `type` (`'row'` default, or `'card'`) and `isSelected`.
 
-- Maps default Filament action button size (`Size::Medium`) to Flux `sm` height application-wide.
-- Aligns list actions with dropdown menus and avoids double-wrapped label text.
-
----
-
-## Development Workflow
-
-### Package layout (this repo)
-
-This is a **standalone Composer package** ([joranski/flux on GitHub](https://github.com/joranski/flux)). Do **not** edit `vendor/joranski/flux` in the consuming app — changes belong here, then release via git tag.
-
-| What | Where |
-|------|--------|
-| Filament Blade overrides | `resources/views/{namespace}/…` (prepended by `FluxServiceProvider`) |
-| Provider / registration | `src/FluxServiceProvider.php` |
-| App-only layout hooks | Consuming app (`resources/views/filament/app/`, `theme.css`) |
-| Domain packages (emails, comments, …) | Their own repos / `packages/joranski/*` — **not** folded into flux unless adding a new prepended namespace |
-
-**Workflow:**
-
-1. Clone or work in this repo (e.g. `~/packages/flux`).
-2. Copy the **stock Filament** view from `vendor/filament/…` when overriding; preserve Alpine hook classes (`fi-modal-*`, `fi-fo-*`, `filamentModal`, `filamentDropdown`).
-3. Prefer Flux components for chrome that does not drive Filament Alpine (navbar, buttons, forms). Revert to stock Filament markup when Flux breaks Alpine (modals, teleported dropdowns) — see 2026-06-23 notes below.
-4. Bump `"version"` in `composer.json`, commit, tag (`v0.1.1`), push to GitHub.
-5. In the consuming app: `"joranski/flux": "^0.1.1"` + VCS repository (same pattern as `joranski/filament-media`).
-6. `composer update joranski/flux && php artisan view:clear`
-
-**Local path install (optional, like `filament-emails`):** only if you vendor the clone inside the app at `packages/joranski/flux` with a Composer `path` repository — avoid machine-specific absolute paths.
-
-### After changing Blade overrides in this package
+## Testing
 
 ```bash
-php artisan view:clear
+composer test
 ```
 
-If you also changed `resources/css/filament/admin/theme.css`:
+The architecture test is a plain filesystem scan, so it can also run from a host app:
 
 ```bash
-npm run build
-# or: npm run dev
+vendor/bin/pest vendor/joranski/flux/tests/ArchitectureTest.php
 ```
 
-Then hard-refresh the browser. CSS changes **do not** appear until Vite rebuilds the admin theme.
+## License
 
-### Compiled view permissions (production / PHP-FPM)
-
-Blade recompilation writes to `storage/framework/views`. On RHEL/CentOS, PHP-FPM runs as `apache` and must **own** those files (group write alone is not enough for Laravel's `touch()` on compiled views).
-
-From the application root:
-
-```bash
-./bin/fix-web-permissions.sh          # before web traffic / after deploy
-./bin/fix-web-permissions.sh --dev    # before local artisan / Pest (CLI user owns views)
-bash bin/with-cli-storage-permissions.sh php artisan test …
-```
-
-Symptom of wrong ownership: generic **500 Server Error**, log may show `tempnam(): file created in the system's temporary directory` during view compile.
-
----
-
-## Tests
-
-| Test file | What it covers |
-|-----------|----------------|
-| `tests/Feature/Filament/FluxOverridesTest.php` | Modal/dropdown/user-menu layout invariants (run from consuming app) |
-| `tests/Feature/Theme/FluxIconButtonBadgeTest.php` | Badged icon buttons use native Filament markup; non-badged use Flux |
-| `tests/Feature/Authorization/ShieldRoleFormCheckboxListTest.php` | Shield Pages/Widgets checkbox lists render `.fi-fo-checkbox-list-option` |
-
-Run:
-
-```bash
-php artisan test --compact tests/Feature/Theme/FluxIconButtonBadgeTest.php
-php artisan test --compact tests/Feature/Authorization/ShieldRoleFormCheckboxListTest.php
-```
-
----
-
-## Future-Proofing: Customizing Future Filament Plugins
-
-To add visual overrides for a new third-party Filament package:
-
-1. **Identify the view namespace** the plugin registers (e.g. `filament-comments`).
-2. **Prepend the namespace** in `FluxServiceProvider::boot()`:
-   ```php
-   $view->prependNamespace('plugin-namespace', __DIR__.'/../resources/views/plugin-namespace');
-   ```
-3. **Copy or author Blade templates** under `resources/views/plugin-namespace/` using Flux components where appropriate.
-4. **Clear views and rebuild assets** if CSS changed: `php artisan view:clear` and `npm run build`.
-
-When overriding form components that Filament drives with Alpine (checkbox lists, repeaters, etc.), **preserve Filament's documented CSS hook classes** from the vendor template — search the vendor view for `fi-fo-*` or `x-show` selectors before replacing markup with Flux.
-
----
-
-## Quick Reference: Key Files Changed (2026-06-22)
-
-| File | Change |
-|------|--------|
-| `resources/views/filament/components/icon-button.blade.php` | Dual native/Flux rendering for badged vs plain icon buttons |
-| `resources/views/filament-panels/components/page/sub-navigation/sidebar.blade.php` | Collapsed rail centering; `.fi-subnav-item-label` instead of hiding all spans |
-| `resources/views/filament-forms/components/checkbox-list.blade.php` | `.fi-fo-checkbox-list-option` wrapper for Shield searchable lists |
-| `resources/css/filament/admin/theme.css` | Subnav label truncation selector; removed experimental badged icon-button CSS |
-
-### Livewire / Filament modal stability (2026-06-23)
-
-Custom Flux-styled **Filament modals and dropdowns** (`fixed inset-0 flex …` markup) broke Alpine `x-show` / `filamentModal` initialization and blocked header clicks (notification bell, user menu). They are reverted to **stock Filament** structure for:
-
-| File | Change |
-|------|--------|
-| `resources/views/filament/components/modal/index.blade.php` | Stock `fi-modal-window-ctn` / `fi-modal-close-overlay` markup (Alpine-safe) |
-| `resources/views/filament/components/dropdown/index.blade.php` | Stock Filament dropdown; teleported panels use `x-float…shift.teleport.hide` |
-| `resources/views/filament-panels/components/user-menu.blade.php` | Topbar user menu uses `<flux:dropdown>` instead of teleported Filament dropdown |
-| `resources/views/filament-panels/components/layout/index.blade.php` | Header actions: `shrink-0 isolate overflow-visible`; database notifications eager-loaded |
-| `resources/views/filament-panels/components/topbar/database-notifications-trigger.blade.php` | Thin override delegating to badged native icon button |
-
-**Related app fixes (not in this package):** sanitize email `body_html` before preview (`joranski/filament-emails`); load `@fluxScripts` once; Flux modal chrome + transition fixes in `resources/css/filament/admin/theme.css`.
-
-### Filament select multi-select dropdowns (2026-07-10)
-
-**Not a package Blade bug.** Searchable / multi `Select` fields still use Filament's Alpine `selectFormComponent`; the Flux override only wraps native single selects in `<flux:select>`.
-
-Filament renders select option panels as `.fi-dropdown-panel.fi-scrollable` and toggles them with **`display` + `opacity`**, not inline `visibility: visible`.
-
-If the consuming app's `theme.css` hides closed header/action dropdowns with:
-
-```css
-/* WRONG — also hides every form select dropdown */
-.fi-dropdown-panel:not([style*="visibility: visible"]) {
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-```
-
-…multi-selects appear broken (button shows selected labels but the list never opens).
-
-**Correct pattern (host app `theme.css`):**
-
-```css
-.fi-dropdown-panel:not(.fi-scrollable):not([style*="visibility: visible"]) {
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-```
-
-**Test (swm-filament):** `tests/Feature/Theme/AdminThemePersistenceTest.php` — `admin theme css does not hide filament select dropdown panels`.
-
-### Field hints below labels (2026-07-10)
-
-Filament `->hint()` content is injected via `$afterLabelSchema`. The Flux `field-wrapper` override must **not** render that schema inside `<flux:label>` — otherwise hint text sits on the same line as the label (`PasswordMin 8 chars…`).
-
-**Fix:** keep `$afterLabelSchema` outside `<flux:label>`, but on the **same row** in `.fi-fo-field-label-row` with `gap-x-2` between label and hint (not stacked on a new line).
-
-**Test:** `tests/Feature/Filament/FluxOverridesTest.php` — `flux field wrapper renders hints below the label not inside flux:label`.
-
-**v0.1.6:** Schema `Section` zinc surfaces (`resources/css/filament-sections.css`). Filament v5 compiles form sections in PHP, so the Blade section override never runs on Add Child / Edit Details — import the CSS from the host theme.
-
-**v0.1.4:** Removed stray `wire:loading.attr=""` from database notifications trigger override.
-
-**v0.1.3:** Restored Filament's lazy-loaded database notifications in the panel layout (`lazy => false` was forcing immediate mount + extra Livewire round-trips on every page, contributing to error toasts).
-
-**v0.1.2:** Restored Flux zinc slide-out *appearance* via theme CSS while keeping stock Filament Alpine markup; removed `display:none !important` on closed modals (was killing slide-out animations); stable `wire:key` suffixes on modal sections.
-
-**Tests:** `tests/Feature/Filament/FluxOverridesTest.php`
+MIT
