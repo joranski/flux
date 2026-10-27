@@ -70,3 +70,58 @@ it('binds to the parent through wire:model', function (): void {
         ->assertSeeHtml('value="Rush"')
         ->assertSee('Tags');
 });
+
+it('hides the create option and rejects unknown text when creating is off', function (): void {
+    Livewire::test(TagsInput::class, ['suggestions' => ['Free Shipping', 'Rush'], 'allowCreate' => false])
+        ->assertDontSeeHtml('data-flux-option-create')
+        ->assertSeeHtml('data-tags-locked')
+        ->set('search', 'Free Shiping')
+        ->call('createTag')
+        ->assertHasErrors('search')
+        ->assertSet('tags', []);
+});
+
+it('matches typed text to a suggestion, ignoring case, when creating is off', function (): void {
+    Livewire::test(TagsInput::class, ['suggestions' => ['Free Shipping'], 'allowCreate' => false])
+        ->set('search', ' free shipping ')
+        ->call('createTag')
+        ->assertHasNoErrors()
+        ->assertSet('tags', ['Free Shipping']);
+});
+
+it('drops values that are not suggestions but keeps tags the record already had', function (): void {
+    Livewire::test(TagsInput::class, ['tags' => ['Legacy'], 'suggestions' => ['Rush'], 'allowCreate' => false])
+        ->set('tags', ['Legacy', 'rush', 'Made Up'])
+        ->assertSet('tags', ['Legacy', 'Rush']);
+});
+
+it('keeps creating tags by default', function (): void {
+    Livewire::test(TagsInput::class, ['suggestions' => ['Rush']])
+        ->set('tags', ['Rush', 'Made Up'])
+        ->assertSet('tags', ['Rush', 'Made Up']);
+});
+
+it('locks the create setting against browser changes', function (): void {
+    Livewire::test(TagsInput::class, ['allowCreate' => false])
+        ->set('allowCreate', true);
+})->throws(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
+
+it('keeps the parent value when bound with creating off', function (): void {
+    $parent = new class extends Component
+    {
+        /** @var list<string> */
+        public array $selected = ['Legacy'];
+
+        public function render(): string
+        {
+            return <<<'BLADE'
+                <div><livewire:joranski-flux.tags-input wire:model="selected" :suggestions="['Rush']" :allow-create="false" /></div>
+                BLADE;
+        }
+    };
+
+    Livewire::test($parent::class)
+        ->assertSeeHtml('value="Legacy"')
+        ->assertSeeHtml('data-tags-locked')
+        ->assertDontSeeHtml('data-flux-option-create');
+});

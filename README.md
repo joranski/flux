@@ -123,10 +123,19 @@ plain `array` of strings. Duplicates are ignored case-insensitively.
 | `label` | `?string` | `null` | Field label. |
 | `placeholder` | `?string` | `null` | Search input placeholder. |
 | `maxLength` | `int` | `255` | Longest tag accepted. |
+| `allowCreate` | `bool` | `true` | `false` restricts the field to `suggestions` (locked against browser changes). |
 
 ```blade
 <livewire:joranski-flux.tags-input wire:model="form.tags" :suggestions="$existingTags" label="Tags" />
+
+{{-- Approved tags only: no "Create" option, typed text must match a suggestion --}}
+<livewire:joranski-flux.tags-input wire:model="form.tags" :suggestions="$approvedTags" :allow-create="false" />
 ```
+
+With `allowCreate` off, typed text is matched to a suggestion ignoring case (so `free shipping` becomes
+`Free Shipping`), values that are not suggestions are dropped, and tags the bound value already had when the
+component mounted stay selectable, so locking a field never discards existing data. The bound value still
+comes from the browser: validate it against the same list when you save.
 
 It is a Livewire component (not a Blade component) because creating a tag needs server state. The package
 does not know about `spatie/laravel-tags`; sync the resulting array in your own form object.
